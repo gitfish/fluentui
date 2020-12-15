@@ -171,5 +171,37 @@ describe('resolveStyleRules', () => {
         }
       `);
     });
+
+    it('allows to increase specificity', () => {
+      expect(resolveStyleRules({ color: 'red' }, 1)).toMatchInlineSnapshot(`
+        .fe3e8s91.fe3e8s91 {
+          color: red;
+        }
+      `);
+      expect(resolveStyleRules({ color: 'red' }, 2)).toMatchInlineSnapshot(`
+        .fe3e8s92.fe3e8s92.fe3e8s92 {
+          color: red;
+        }
+      `);
+    });
+
+    it('allows to increase for globals', () => {
+      expect(resolveStyleRules({ ':global &': { color: 'red' } }, 1)).toMatchInlineSnapshot(`
+        :global .fluno3u1.fluno3u1 {
+          color: red;
+        }
+      `);
+    });
+
+    it('allows to increase for RTL', () => {
+      expect(resolveStyleRules({ left: '5px' }, 1)).toMatchInlineSnapshot(`
+        .f5b3q4t1.f5b3q4t1 {
+          left: 5px;
+        }
+        .rf5b3q4t1.rf5b3q4t1 {
+          right: 5px;
+        }
+      `);
+    });
   });
 });

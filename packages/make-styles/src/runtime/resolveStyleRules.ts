@@ -13,6 +13,7 @@ import { normalizeNestedProperty } from './utils/normalizeNestedProperty';
 
 export function resolveStyleRules(
   styles: MakeStyles,
+  unstable_cssPriority: number = 0,
   selector = '',
   result: Record<string, MakeStylesResolvedRule> = {},
 ): Record<string, MakeStylesResolvedRule> {
@@ -30,14 +31,17 @@ export function resolveStyleRules(
       // uniq key based on property & selector, used for merging later
       const key = selector + propName;
 
-      const className = HASH_PREFIX + hashString(selector + propName + propValue);
-      const css = compileCSS(className, selector, propName, propValue);
+      const className =
+        HASH_PREFIX +
+        hashString(selector + propName + propValue) +
+        (unstable_cssPriority === 0 ? '' : unstable_cssPriority);
+      const css = compileCSS(className, selector, propName, propValue, unstable_cssPriority);
 
       const rtl = convertProperty(propName, propValue);
       const flippedInRtl = rtl.key !== propName || rtl.value !== propValue;
 
       if (flippedInRtl) {
-        const rtlCSS = compileCSS(RTL_PREFIX + className, selector, rtl.key, rtl.value);
+        const rtlCSS = compileCSS(RTL_PREFIX + className, selector, rtl.key, rtl.value, unstable_cssPriority);
 
         // There is no sense to store RTL className as it's "r" + regular className
         result[key] = [className, css, rtlCSS];
@@ -46,9 +50,9 @@ export function resolveStyleRules(
       }
     } else if (isObject(propValue)) {
       if (isNestedSelector(propName)) {
-        resolveStyleRules(propValue, selector + normalizeNestedProperty(propName), result);
+        resolveStyleRules(propValue, unstable_cssPriority, selector + normalizeNestedProperty(propName), result);
       } else if (isMediaQuerySelector(propName)) {
-        resolveStyleRules(propValue, selector + propName, result);
+        resolveStyleRules(propValue, unstable_cssPriority, selector + propName, result);
       } else if (propName === 'animationName') {
         // TODO: support RTL!
         const keyframe = compileKeyframeRule(propValue);
@@ -59,7 +63,7 @@ export function resolveStyleRules(
 
         result[animationName] = [animationName, keyframeCSS /* rtlCSS */];
 
-        resolveStyleRules({ animationName }, selector, result);
+        resolveStyleRules({ animationName }, unstable_cssPriority, selector, result);
       }
       // TODO: support support queries
     }
