@@ -29,12 +29,10 @@ export function compileCSS(options: CompileCSSOptions): string {
   // https://github.com/thysultan/stylis.js/issues/252
   if (pseudo.indexOf(':global(') === 0) {
     const globalSelector = /global\((.+)\)/.exec(pseudo)?.[1];
-    const classNameSelector = repeatSelector(`.${className}`, unstable_cssPriority);
-
     const shouldIncludeClassName = pseudo.indexOf('&') === pseudo.length - 1;
 
     const cssRule = shouldIncludeClassName
-      ? `${globalSelector} { ${classNameSelector} ${cssDeclaration} }`
+      ? `${globalSelector} { .${className} ${cssDeclaration} }`
       : `${globalSelector} ${cssDeclaration}`;
 
     return serialize(compile(cssRule), middleware([stringify]));

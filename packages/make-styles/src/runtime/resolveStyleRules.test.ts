@@ -397,14 +397,6 @@ describe('resolveStyleRules', () => {
       `);
     });
 
-    it('allows to increase for globals', () => {
-      expect(resolveStyleRules({ ':global &': { color: 'red' } }, 1)).toMatchInlineSnapshot(`
-        :global .fluno3u1.fluno3u1 {
-          color: red;
-        }
-      `);
-    });
-
     it('allows to increase for RTL', () => {
       expect(resolveStyleRules({ left: '5px' }, 1)).toMatchInlineSnapshot(`
         .f5b3q4t1.f5b3q4t1 {

@@ -15,10 +15,10 @@ import { normalizeNestedProperty } from './utils/normalizeNestedProperty';
 
 export function resolveStyleRules(
   styles: MakeStyles,
+  unstable_cssPriority: number = 0,
   pseudo = '',
   media = '',
   support = '',
-  unstable_cssPriority: number = 0,
   result: Record<string, MakeStylesResolvedRule> = {},
 ): Record<string, MakeStylesResolvedRule> {
   const expandedStyles = (expand(styles) as unknown) as MakeStyles;
@@ -36,7 +36,9 @@ export function resolveStyleRules(
       const key = pseudo + media + support + property;
 
       // trimming of values is required to generate consistent hashes
-      const className = HASH_PREFIX + hashString(pseudo + media + support + property + value.toString().trim());
+      const classNameHash = hashString(pseudo + media + support + property + value.toString().trim());
+      const className = HASH_PREFIX + classNameHash + (unstable_cssPriority === 0 ? '' : unstable_cssPriority);
+
       const css = compileCSS({
         className,
         media,
@@ -70,20 +72,20 @@ export function resolveStyleRules(
       if (isNestedSelector(property)) {
         resolveStyleRules(
           value,
+          unstable_cssPriority,
           pseudo + normalizeNestedProperty(property),
           media,
           support,
-          unstable_cssPriority,
           result,
         );
       } else if (isMediaQuerySelector(property)) {
         const combinedMediaQuery = generateCombinedQuery(media, property.slice(6).trim());
 
-        resolveStyleRules(value, pseudo, combinedMediaQuery, support, unstable_cssPriority, result);
+        resolveStyleRules(value, unstable_cssPriority, pseudo, combinedMediaQuery, support, result);
       } else if (isSupportQuerySelector(property)) {
         const combinedSupportQuery = generateCombinedQuery(support, property.slice(9).trim());
 
-        resolveStyleRules(value, pseudo, media, combinedSupportQuery, unstable_cssPriority, result);
+        resolveStyleRules(value, unstable_cssPriority, pseudo, media, combinedSupportQuery, result);
       } else if (property === 'animationName') {
         // TODO: support RTL!
         const keyframe = compileKeyframeRule(value);
@@ -94,7 +96,7 @@ export function resolveStyleRules(
 
         result[animationName] = [animationName, keyframeCSS /* rtlCSS */];
 
-        resolveStyleRules({ animationName }, pseudo, media, support, unstable_cssPriority, result);
+        resolveStyleRules({ animationName }, unstable_cssPriority, pseudo, media, support, result);
       }
     }
   });
